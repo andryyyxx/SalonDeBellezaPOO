@@ -280,6 +280,7 @@ public class FrmClientes extends JFrame {
         btnGuardar.addActionListener(e -> guardarCliente());
         btnLimpiar.addActionListener(e -> limpiarCampos());
         btnNuevo.addActionListener(e -> limpiarCampos());
+        btnBuscar.addActionListener(e -> buscarCliente());
 
         //mostrar clientes al iniciar la aplicación
         cargarClientes();
@@ -367,6 +368,88 @@ public class FrmClientes extends JFrame {
         );
     }
     
+
+}
+//metodo para buscar cliente por id
+private void buscarCliente() {
+    if (txtId.getText().trim().isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Escribe el ID del cliente que deseas buscar.",
+                    "ID vacío",
+                    JOptionPane.WARNING_MESSAGE
+            );
+
+            return;
+        }
+
+        String sql = """
+                SELECT *
+                FROM clientes
+                WHERE id = ?
+                """;
+
+        try (
+                Connection conexion = Conexion.conectar();
+                PreparedStatement sentencia = conexion.prepareStatement(sql)
+        ) {
+
+            int id = Integer.parseInt(txtId.getText().trim());
+
+            sentencia.setInt(1, id);
+
+            ResultSet resultado = sentencia.executeQuery();
+
+            if (resultado.next()) {
+
+                txtNombre.setText(resultado.getString("nombre"));
+                txtApellidos.setText(resultado.getString("apellidos"));
+                txtTelefono.setText(resultado.getString("telefono"));
+                txtCorreo.setText(resultado.getString("correo"));
+                cmbServicio.setSelectedItem(resultado.getString("servicio"));
+                txtFecha.setText(resultado.getString("fecha"));
+                txtHora.setText(resultado.getString("hora"));
+                cmbEstilista.setSelectedItem(resultado.getString("estilista"));
+                txtCosto.setText(String.valueOf(resultado.getDouble("costo")));
+                txtObservaciones.setText(
+                        resultado.getString("observaciones")
+                );
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Cliente encontrado correctamente."
+                );
+
+            } else {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "No se encontró ningún cliente con ese ID.",
+                        "Cliente no encontrado",
+                        JOptionPane.WARNING_MESSAGE
+                );
+            }
+
+        } catch (NumberFormatException e) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "El ID debe ser un número válido.",
+                    "ID incorrecto",
+                    JOptionPane.ERROR_MESSAGE
+            );
+
+        } catch (SQLException e) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No se pudo buscar el cliente:\n"
+                            + e.getMessage(),
+                    "Error de base de datos",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
 
 }
 // MÉTODO PARA MOSTRAR LOS CLIENTES EN EL JTABLE
