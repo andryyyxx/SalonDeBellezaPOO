@@ -281,10 +281,13 @@ public class FrmClientes extends JFrame {
         btnLimpiar.addActionListener(e -> limpiarCampos());
         btnNuevo.addActionListener(e -> limpiarCampos());
         btnBuscar.addActionListener(e -> buscarCliente());
+        btnModificar.addActionListener(e -> modificarCliente());
+        btnEliminar.addActionListener(e -> eliminarCliente());
+
 
         //mostrar clientes al iniciar la aplicación
         cargarClientes();
-}
+}//fin de constructor
 
     
     //METODO PARA GUARDAR CLIENTE EN LA BASE DE DATOS
@@ -450,8 +453,202 @@ private void buscarCliente() {
                     JOptionPane.ERROR_MESSAGE
             );
         }
+    
 
 }
+// MÉTODO PARA MODIFICAR CLIENTEs
+    private void modificarCliente() {
+
+        if (txtId.getText().trim().isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Escribe o busca el ID del cliente que deseas modificar.",
+                    "ID vacío",
+                    JOptionPane.WARNING_MESSAGE
+            );
+
+            return;
+        }
+
+        if (txtNombre.getText().trim().isEmpty()
+                || txtApellidos.getText().trim().isEmpty()
+                || txtFecha.getText().trim().isEmpty()
+                || txtHora.getText().trim().isEmpty()
+                || txtCosto.getText().trim().isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Completa los campos obligatorios.",
+                    "Campos incompletos",
+                    JOptionPane.WARNING_MESSAGE
+            );
+
+            return;
+        }
+
+        String sql = """
+                UPDATE clientes
+                SET nombre = ?,
+                    apellidos = ?,
+                    telefono = ?,
+                    correo = ?,
+                    servicio = ?,
+                    fecha = ?,
+                    hora = ?,
+                    estilista = ?,
+                    costo = ?,
+                    observaciones = ?
+                WHERE id = ?
+                """;
+
+        try (
+                Connection conexion = Conexion.conectar();
+                PreparedStatement sentencia = conexion.prepareStatement(sql)
+        ) {
+
+            int id = Integer.parseInt(txtId.getText().trim());
+            double costo = Double.parseDouble(txtCosto.getText().trim());
+
+            sentencia.setString(1, txtNombre.getText().trim());
+            sentencia.setString(2, txtApellidos.getText().trim());
+            sentencia.setString(3, txtTelefono.getText().trim());
+            sentencia.setString(4, txtCorreo.getText().trim());
+            sentencia.setString(5, cmbServicio.getSelectedItem().toString());
+            sentencia.setString(6, txtFecha.getText().trim());
+            sentencia.setString(7, txtHora.getText().trim());
+            sentencia.setString(8, cmbEstilista.getSelectedItem().toString());
+            sentencia.setDouble(9, costo);
+            sentencia.setString(10, txtObservaciones.getText().trim());
+            sentencia.setInt(11, id);
+
+            int filasModificadas = sentencia.executeUpdate();
+
+            if (filasModificadas > 0) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Cliente modificado correctamente."
+                );
+
+                cargarClientes();
+                limpiarCampos();
+
+            } else {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "No se encontró ningún cliente con ese ID.",
+                        "Cliente no encontrado",
+                        JOptionPane.WARNING_MESSAGE
+                );
+            }
+
+        } catch (NumberFormatException e) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "El ID y el costo deben ser números válidos.",
+                    "Datos incorrectos",
+                    JOptionPane.ERROR_MESSAGE
+            );
+
+        } catch (SQLException e) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No se pudo modificar el cliente:\n"
+                            + e.getMessage(),
+                    "Error de base de datos",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+    // MÉTODO PARA ELIMINAR CLIENTE
+    //==========================================================
+    private void eliminarCliente() {
+
+        if (txtId.getText().trim().isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Escribe o busca el ID del cliente que deseas eliminar.",
+                    "ID vacío",
+                    JOptionPane.WARNING_MESSAGE
+            );
+
+            return;
+        }
+
+        int confirmacion = JOptionPane.showConfirmDialog(
+                this,
+                "¿Seguro que deseas eliminar este cliente?",
+                "Confirmar eliminación",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        if (confirmacion != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        String sql = """
+                DELETE FROM clientes
+                WHERE id = ?
+                """;
+
+        try (
+                Connection conexion = Conexion.conectar();
+                PreparedStatement sentencia = conexion.prepareStatement(sql)
+        ) {
+
+            int id = Integer.parseInt(txtId.getText().trim());
+
+            sentencia.setInt(1, id);
+
+            int filasEliminadas = sentencia.executeUpdate();
+
+            if (filasEliminadas > 0) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Cliente eliminado correctamente."
+                );
+
+                cargarClientes();
+                limpiarCampos();
+
+            } else {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "No se encontró ningún cliente con ese ID.",
+                        "Cliente no encontrado",
+                        JOptionPane.WARNING_MESSAGE
+                );
+            }
+
+        } catch (NumberFormatException e) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "El ID debe ser un número válido.",
+                    "ID incorrecto",
+                    JOptionPane.ERROR_MESSAGE
+            );
+
+        } catch (SQLException e) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No se pudo eliminar el cliente:\n"
+                            + e.getMessage(),
+                    "Error de base de datos",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
 // MÉTODO PARA MOSTRAR LOS CLIENTES EN EL JTABLE
 private void cargarClientes() {
 
