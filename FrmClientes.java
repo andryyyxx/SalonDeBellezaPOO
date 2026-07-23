@@ -80,6 +80,9 @@ public class FrmClientes extends JFrame {
         setLayout(null);
         setResizable(false);
 
+        //Conexion 
+        Conexion.crearTabla();
+
         //------------------------------------------------------
         // TÍTULO
         //------------------------------------------------------
