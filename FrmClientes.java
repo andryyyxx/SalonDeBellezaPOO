@@ -2,6 +2,10 @@
 //DOCENTE: GABRIEL MAGAÑA GARCIA
 //INTEGRACION DE APLICACIONES A BASES DE DATOS
 import java.awt.Font;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
@@ -272,7 +276,166 @@ public class FrmClientes extends JFrame {
 
         add(panelTabla);
 
+        //botones fun
+        btnGuardar.addActionListener(e -> guardarCliente());
+        btnLimpiar.addActionListener(e -> limpiarCampos());
+        btnNuevo.addActionListener(e -> limpiarCampos());
+
+        //mostrar clientes al iniciar la aplicación
+        cargarClientes();
+}
+
+    
+    //METODO PARA GUARDAR CLIENTE EN LA BASE DE DATOS
+    private void guardarCliente() {
+
+    if (txtNombre.getText().trim().isEmpty()
+            || txtApellidos.getText().trim().isEmpty()
+            || txtFecha.getText().trim().isEmpty()
+            || txtHora.getText().trim().isEmpty()
+            || txtCosto.getText().trim().isEmpty()) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Completa los campos obligatorios.",
+                "Campos incompletos",
+                JOptionPane.WARNING_MESSAGE
+        );
+        return;
     }
+
+    String sql = """
+            INSERT INTO clientes (
+                nombre,
+                apellidos,
+                telefono,
+                correo,
+                servicio,
+                fecha,
+                hora,
+                estilista,
+                costo,
+                observaciones
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """;
+
+    try (
+        Connection conexion = Conexion.conectar();
+        PreparedStatement sentencia = conexion.prepareStatement(sql)
+    ) {
+
+        double costo = Double.parseDouble(txtCosto.getText().trim());
+
+        sentencia.setString(1, txtNombre.getText().trim());
+        sentencia.setString(2, txtApellidos.getText().trim());
+        sentencia.setString(3, txtTelefono.getText().trim());
+        sentencia.setString(4, txtCorreo.getText().trim());
+        sentencia.setString(5, cmbServicio.getSelectedItem().toString());
+        sentencia.setString(6, txtFecha.getText().trim());
+        sentencia.setString(7, txtHora.getText().trim());
+        sentencia.setString(8, cmbEstilista.getSelectedItem().toString());
+        sentencia.setDouble(9, costo);
+        sentencia.setString(10, txtObservaciones.getText().trim());
+
+        sentencia.executeUpdate();
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Cliente guardado correctamente."
+        );
+
+        cargarClientes();
+        limpiarCampos();
+
+    } catch (NumberFormatException e) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "El costo debe ser un número válido.",
+                "Costo incorrecto",
+                JOptionPane.ERROR_MESSAGE
+        );
+
+    } catch (SQLException e) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "No se pudo guardar el cliente:\n" + e.getMessage(),
+                "Error de base de datos",
+                JOptionPane.ERROR_MESSAGE
+        );
+    }
+    
+
+}
+// MÉTODO PARA MOSTRAR LOS CLIENTES EN EL JTABLE
+private void cargarClientes() {
+
+    // Limpia las filas para que no se repitan
+    modeloTabla.setRowCount(0);
+
+    String sql = """
+            SELECT id, nombre, apellidos, telefono,
+                   servicio, fecha, hora, costo
+            FROM clientes
+            ORDER BY id
+            """;
+
+    try (
+        Connection conexion = Conexion.conectar();
+        PreparedStatement sentencia = conexion.prepareStatement(sql);
+        ResultSet resultado = sentencia.executeQuery()
+    ) {
+
+        while (resultado.next()) {
+
+            Object[] fila = {
+                resultado.getInt("id"),
+                resultado.getString("nombre"),
+                resultado.getString("apellidos"),
+                resultado.getString("telefono"),
+                resultado.getString("servicio"),
+                resultado.getString("fecha"),
+                resultado.getString("hora"),
+                resultado.getDouble("costo")
+            };
+
+            modeloTabla.addRow(fila);
+        }
+
+    } catch (SQLException e) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "No se pudieron mostrar los clientes:\n"
+                        + e.getMessage(),
+                "Error de base de datos",
+                JOptionPane.ERROR_MESSAGE
+        );
+    }
+}
+
+    // MÉTODO PARA LIMPIAR CAMPOS
+private void limpiarCampos() {
+
+    txtId.setText("");
+    txtNombre.setText("");
+    txtApellidos.setText("");
+    txtTelefono.setText("");
+    txtCorreo.setText("");
+    txtFecha.setText("");
+    txtHora.setText("");
+    txtCosto.setText("");
+    txtObservaciones.setText("");
+
+    cmbServicio.setSelectedIndex(0);
+    cmbEstilista.setSelectedIndex(0);
+
+    txtNombre.requestFocus();
+}
+
+    
 
     //----------------------------------------------------------
     // MÉTODO PRINCIPAL
