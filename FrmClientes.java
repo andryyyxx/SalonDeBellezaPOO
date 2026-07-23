@@ -284,9 +284,20 @@ public class FrmClientes extends JFrame {
         btnModificar.addActionListener(e -> modificarCliente());
         btnEliminar.addActionListener(e -> eliminarCliente());
 
+        //evento para cargar cliente al seleccionar fila de la tabla enjTable
+        tablaClientes.getSelectionModel().addListSelectionListener(e -> {
+
+    if (!e.getValueIsAdjusting()) {
+        cargarClienteDesdeTabla();
+    }
+});
+    
+
+
 
         //mostrar clientes al iniciar la aplicación
         cargarClientes();
+    
 }//fin de constructor
 
     
@@ -455,6 +466,21 @@ private void buscarCliente() {
         }
     
 
+}
+//metodo para cargar cliente desde la tabla al seleccionar una fila en jtable
+private void cargarClienteDesdeTabla() {
+
+    int filaSeleccionada = tablaClientes.getSelectedRow();
+
+    if (filaSeleccionada == -1) {
+        return;
+    }
+
+    txtId.setText(
+            modeloTabla.getValueAt(filaSeleccionada, 0).toString()
+    );
+
+    buscarCliente();
 }
 // MÉTODO PARA MODIFICAR CLIENTEs
     private void modificarCliente() {
